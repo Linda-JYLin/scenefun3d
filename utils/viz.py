@@ -7,9 +7,11 @@
 import open3d as o3d
 import numpy as np
 import copy
-from utils.pc_process import pc_estimate_normals
+# from utils.pc_process import pc_estimate_normals
+from pc_process import pc_estimate_normals
 import pyviz3d.visualizer as viz
-from utils.viz_constants import SCANNET_COLOR_MAP_200, VIZ_TOOL_OPTIONS
+# from utils.viz_constants import SCANNET_COLOR_MAP_200, VIZ_TOOL_OPTIONS
+from viz_constants import SCANNET_COLOR_MAP_200, VIZ_TOOL_OPTIONS
 
 def viz_3d(to_plot_list, viz_tool="pyviz3d"):
     """
@@ -164,20 +166,72 @@ def viz_motions(laser_scan_pcd, motion_types, motion_dirs, motion_origins, motio
     v.add_points('Background Color', np.array(pcd.points), new_pcd_colors*255., np.array(pcd.normals), point_size=8, alpha=.8, visible=True)
 
     COLOR_MAP = list(SCANNET_COLOR_MAP_200.values())
-    for idx, (m_type, m_dir, m_origin, m_orient, m_label) in \
-        enumerate(zip(motion_types, motion_dirs, motion_origins, motion_viz_orients, motion_labels)):
-
+    for idx, (m_type, m_dir, m_origin, m_orient, m_label) in enumerate(zip(motion_types, motion_dirs, motion_origins, motion_viz_orients, motion_labels)):
         cur_color = np.array(COLOR_MAP[idx % len(COLOR_MAP)]) / 255.
+        # print(f"[Motion {idx}] Label: {m_label}, Type: {m_type}, Dir: {m_dir}, Origin: {m_origin}, Orient: {m_orient}, Color: {cur_color}")
         v.add_motion(
-            m_label, 
-            m_type, 
-            np.array(m_dir), 
-            np.array(m_origin - pcd_mean), 
-            m_orient, 
-            cur_color, 
-            cur_color, 
+            m_label,
+            m_type,
+            np.array(m_dir),
+            np.array(m_origin - pcd_mean),
+            m_orient,
+            cur_color,
+            cur_color,
             visible=True
         )
-        breakpoint()
-
+        # breakpoint()
     v.save('pyviz3d_output')
+
+if __name__ == "__main__":
+    import open3d as o3d
+    import json
+
+    # viz_3d
+    # pcd = o3d.geometry.PointCloud()
+    # pcd.points = o3d.utility.Vector3dVector(np.random.rand(100, 3))
+    # pcd.colors = o3d.utility.Vector3dVector(np.random.rand(100, 3))
+    # pcd = o3d.io.read_point_cloud(r"D:\Github_documents\scenefun3d\data\420683\420683_laser_scan.ply")
+    # viz_3d([pcd])
+
+    # viz_masks
+    # def load_mask_annotations(json_file_path):
+    #     with open(json_file_path, 'r') as f:
+    #         data = json.load(f)
+    #
+    #     mask_indices = []
+    #     mask_labels = []
+    #
+    #     for annot in data['annotations']:
+    #         mask_indices.append(annot['indices'])
+    #         mask_labels.append(annot['label'])
+    #
+    #     return mask_indices, mask_labels
+    # mask_indices, mask_labels = load_mask_annotations(r"D:\Github_documents\scenefun3d\data\420683\420683_annotations.json")
+    # laser_scan_pcd = o3d.geometry.PointCloud()
+    # laser_scan_pcd = o3d.io.read_point_cloud(r"D:\Github_documents\scenefun3d\data\420683\420683_laser_scan.ply")
+    # viz_masks(laser_scan_pcd, mask_indices, mask_labels, use_normals=True, viz_tool='pyviz3d')
+
+    # viz_motions
+    def load_motion_annotations(json_file_path):
+        with open(json_file_path, 'r') as f:
+            data = json.load(f)
+
+        motion_types = []
+        motion_dirs = []
+        motion_origins = []
+        motion_viz_orients = []
+
+        for annot in data['motions']:
+            motion_types.append(annot['motion_type'])
+            motion_dirs.append(annot['motion_dir'])
+            motion_origins.append(annot['motion_origin_idx'])
+            motion_viz_orients.append(annot['motion_viz_orient'])
+
+        return motion_types, motion_dirs, motion_origins, motion_viz_orients
+
+    motion_types, motion_dirs, motion_origins, motion_viz_orients = load_motion_annotations(r"D:\Github_documents\scenefun3d\data\420683\420683_motions.json")
+    laser_scan_pcd = o3d.geometry.PointCloud()
+    laser_scan_pcd = o3d.io.read_point_cloud(r"D:\Github_documents\scenefun3d\data\420683\420683_laser_scan.ply")
+    points = np.asarray(laser_scan_pcd.points)
+    origin_points = points[motion_origins]
+    viz_motions(laser_scan_pcd, motion_types, motion_dirs, origin_points, motion_viz_orients, motion_labels=None)

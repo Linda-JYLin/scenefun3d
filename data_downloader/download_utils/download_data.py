@@ -9,6 +9,7 @@ modified from https://github.com/apple/ARKitScenes/blob/main/download_data.py
 import subprocess
 import pandas as pd
 import os
+from moviepy.editor import VideoFileClip
 from moviepy import *
 
 ARKitScenes_url = 'https://docs-assets.developer.apple.com/ml-research/datasets/arkitscenes/v1'
